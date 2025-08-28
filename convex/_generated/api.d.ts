@@ -28,7 +28,6 @@ import type * as githubUser_repository_mutations_create from "../githubUser/repo
 import type * as githubUser_repository_mutations_remove from "../githubUser/repository/mutations/remove.js";
 import type * as githubUser_repository_mutations_update from "../githubUser/repository/mutations/update.js";
 import type * as githubUser_repository_query from "../githubUser/repository/query.js";
-import type * as http_api_routes from "../http/api/routes.js";
 import type * as http from "../http.js";
 
 /**
@@ -55,7 +54,6 @@ declare const fullApi: ApiFromModules<{
   "githubUser/repository/mutations/remove": typeof githubUser_repository_mutations_remove;
   "githubUser/repository/mutations/update": typeof githubUser_repository_mutations_update;
   "githubUser/repository/query": typeof githubUser_repository_query;
-  "http/api/routes": typeof http_api_routes;
   http: typeof http;
 }>;
 export declare const api: FilterApi<
