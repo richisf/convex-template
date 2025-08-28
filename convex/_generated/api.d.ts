@@ -14,8 +14,10 @@ import type {
   FunctionReference,
 } from "convex/server";
 import type * as auth from "../auth.js";
+import type * as github_actions from "../github/actions.js";
+import type * as github_service from "../github/service.js";
+import type * as github from "../github.js";
 import type * as http from "../http.js";
-import type * as myFunctions from "../myFunctions.js";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -27,8 +29,10 @@ import type * as myFunctions from "../myFunctions.js";
  */
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
+  "github/actions": typeof github_actions;
+  "github/service": typeof github_service;
+  github: typeof github;
   http: typeof http;
-  myFunctions: typeof myFunctions;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,
