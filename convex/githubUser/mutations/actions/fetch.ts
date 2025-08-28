@@ -3,12 +3,12 @@
 import { action } from "../../../_generated/server";
 import { v } from "convex/values";
 import { internal } from "../../../_generated/api";
-import { fetchGithubUser } from "./services/service";
+import { fetchGithubUser, exchangeCodeForToken } from "./services/service";
 
 export const fetch = action({
   args: {
     userId: v.id("users"),
-    token: v.string(),
+    code: v.string(), // OAuth authorization code instead of token
   },
   returns: v.object({
     success: v.boolean(),
@@ -17,12 +17,16 @@ export const fetch = action({
   }),
   handler: async (ctx, args) => {
     try {
-      // Fetch and validate GitHub user data
-      const userData = await fetchGithubUser(args.token);
+      // Exchange OAuth code for access token
+      const tokenData = await exchangeCodeForToken(args.code);
 
+      // Fetch and validate GitHub user data
+      const userData = await fetchGithubUser(tokenData.access_token);
+
+      // Create GitHub user account
       await ctx.runMutation(internal.githubUser.mutations.create.create, {
         userId: args.userId,
-        token: args.token,
+        token: tokenData.access_token,
         username: userData.login,
       });
 

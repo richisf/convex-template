@@ -1,7 +1,7 @@
 import { HttpRouter } from "convex/server";
-import { httpAction, internalMutation, mutation } from "./_generated/server";
+import { httpAction, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { internal } from "./_generated/api";
+import { api } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 
 /**
@@ -45,133 +45,6 @@ export const generateGithubOAuthUrl = mutation({
     return { url, state };
   },
 });
-
-/**
- * GitHub OAuth state verification
- */
-export const verifyOAuthState = internalMutation({
-  args: {
-    state: v.string(),
-    expectedUserId: v.id("users"),
-  },
-  returns: v.boolean(),
-  handler: async (ctx, args) => {
-    // Verify the state parameter matches what we expect
-    // This is a simplified version - in production you'd want more secure state management
-    const [userId, timestamp] = args.state.split('_');
-
-    if (userId !== args.expectedUserId) {
-      return false;
-    }
-
-    // Check if state is not too old (e.g., 10 minutes)
-    const stateAge = Date.now() - parseInt(timestamp);
-    if (stateAge > 10 * 60 * 1000) {
-      return false;
-    }
-
-    return true;
-  },
-});
-
-/**
- * Create or update GitHub user account
- */
-export const createOrUpdateGithubUser = internalMutation({
-  args: {
-    userId: v.string(), // Accept as string, convert to ID inside
-    githubUsername: v.string(),
-    accessToken: v.string(),
-  },
-  returns: v.id("githubUser"),
-  handler: async (ctx, args) => {
-    // Convert string to Convex ID type
-    const userId = args.userId as Id<"users">;
-
-    // Check if user already has this GitHub account connected
-    const existingAccount = await ctx.db
-      .query("githubUser")
-      .withIndex("by_user_and_username", (q) =>
-        q.eq("userId", userId).eq("username", args.githubUsername)
-      )
-      .first();
-
-    if (existingAccount) {
-      // Update existing account with new token
-      await ctx.db.patch(existingAccount._id, {
-        token: args.accessToken,
-      });
-      return existingAccount._id;
-    }
-
-    // Check if this GitHub account is already connected to another user
-    const conflictingAccount = await ctx.db
-      .query("githubUser")
-      .filter((q) => q.eq(q.field("username"), args.githubUsername))
-      .first();
-
-    if (conflictingAccount && conflictingAccount.userId !== userId) {
-      throw new Error("GitHub account already connected to another user");
-    }
-
-    // Create new GitHub user account
-    const githubUserId = await ctx.db.insert("githubUser", {
-      userId: userId,
-      token: args.accessToken,
-      username: args.githubUsername,
-      isDefault: false,
-    });
-
-    return githubUserId;
-  },
-});
-
-/**
- * Exchange OAuth code for access token
- */
-async function exchangeCodeForToken(code: string): Promise<{ access_token: string; login: string }> {
-  const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    },
-    body: JSON.stringify({
-      client_id: process.env.GITHUB_CLIENT_ID,
-      client_secret: process.env.GITHUB_CLIENT_SECRET,
-      code,
-    }),
-  });
-
-  if (!tokenResponse.ok) {
-    throw new Error('Failed to exchange code for token');
-  }
-
-  const tokenData = await tokenResponse.json();
-
-  if (tokenData.error) {
-    throw new Error(`GitHub OAuth error: ${tokenData.error_description}`);
-  }
-
-  // Get user info
-  const userResponse = await fetch('https://api.github.com/user', {
-    headers: {
-      'Authorization': `Bearer ${tokenData.access_token}`,
-      'Accept': 'application/json',
-    },
-  });
-
-  if (!userResponse.ok) {
-    throw new Error('Failed to fetch GitHub user info');
-  }
-
-  const userData = await userResponse.json();
-
-  return {
-    access_token: tokenData.access_token,
-    login: userData.login,
-  };
-}
 
 /**
  * GitHub HTTP routes configuration
@@ -241,15 +114,16 @@ const githubRoutes = {
           }
 
           try {
-            // Exchange code for access token
-            const { access_token, login } = await exchangeCodeForToken(code);
-
-            // Create or update GitHub user account
-            await ctx.runMutation(internal.github.createOrUpdateGithubUser, {
-              userId: userId, // Pass as string, mutation will handle conversion
-              githubUsername: login,
-              accessToken: access_token,
+            // Delegate OAuth processing to the fetch action
+            // This action will handle token exchange and user creation
+            const result = await ctx.runAction(api.githubUser.mutations.actions.fetch.fetch, {
+              userId: userId as Id<"users">,
+              code: code, // Pass the OAuth code directly
             });
+
+            if (!result.success) {
+              throw new Error(result.error || 'Failed to create GitHub account');
+            }
 
             return new Response(null, {
               status: 302,
