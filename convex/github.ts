@@ -6,6 +6,7 @@ import { Id } from "./_generated/dataModel";
 
 /**
  * Generate GitHub OAuth URL with state parameter
+ * Works for both authenticated and unauthenticated users
  */
 export const generateGithubOAuthUrl = mutation({
   args: {},
@@ -14,18 +15,12 @@ export const generateGithubOAuthUrl = mutation({
     state: v.string(),
   }),
   handler: async (ctx) => {
-    // Get the authenticated user identity
+    // Try to get the authenticated user identity
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new Error("Not authenticated");
-    }
-
-    // Use the subject (user ID) from the identity
-    const userId = identity.subject;
-
-    // Generate state parameter: userId_timestamp
+    
+    // Generate state parameter: userId_timestamp or default_timestamp
     const timestamp = Date.now();
-    const state = `${userId}_${timestamp}`;
+    const state = identity ? `${identity.subject}_${timestamp}` : `default_${timestamp}`;
 
     // GitHub OAuth URL
     const clientId = process.env.GITHUB_CLIENT_ID;
@@ -91,9 +86,9 @@ const githubRoutes = {
             });
           }
 
-          // Parse state to get user ID
-          const [userId, timestamp] = state.split('_');
-          if (!userId || !timestamp) {
+          // Parse state to get user ID or default indicator
+          const [userIdOrDefault, timestamp] = state.split('_');
+          if (!userIdOrDefault || !timestamp) {
             return new Response(null, {
               status: 302,
               headers: {
@@ -116,8 +111,9 @@ const githubRoutes = {
           try {
             // Delegate OAuth processing to the fetch action
             // This action will handle token exchange and user creation
+            const isDefaultAccount = userIdOrDefault === 'default';
             const result = await ctx.runAction(api.githubUser.mutations.actions.fetch.fetch, {
-              userId: userId as Id<"users">,
+              userId: isDefaultAccount ? undefined : (userIdOrDefault as Id<"users">),
               code: code, // Pass the OAuth code directly
             });
 
@@ -125,10 +121,15 @@ const githubRoutes = {
               throw new Error(result.error || 'Failed to create GitHub account');
             }
 
+            // Redirect based on whether this was a default or user account
+            const redirectUrl = userIdOrDefault === 'default' 
+              ? `${process.env.SITE_URL || "http://localhost:3000"}/?success=github_connected`
+              : `${process.env.SITE_URL || "http://localhost:3000"}/dashboard?success=github_connected`;
+            
             return new Response(null, {
               status: 302,
               headers: {
-                "Location": `${process.env.SITE_URL || "http://localhost:3000"}/dashboard?success=github_connected`
+                "Location": redirectUrl
               }
             });
 

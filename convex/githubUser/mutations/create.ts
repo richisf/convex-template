@@ -11,18 +11,30 @@ export const create = internalMutation({
     },
     returns: v.null(),
     handler: async (ctx, args) => {
+      // Check if creating a default account
+      if (args.isDefault) {
+        // Use the existing query to check for default account
+        const existingDefault = await ctx.runQuery(internal.githubUser.query.by_user, {
+          userId: undefined, // No specific user
+          fallbackToDefault: true // This will return the default account if it exists
+        });
 
-      if (args.userId && !args.isDefault) { 
+        if (existingDefault) {
+          throw new Error("A default GitHub account already exists");
+        }
+      } else if (args.userId) { 
+        // Use the existing query to check if user already has a personal GitHub account
         const existingUserAccount = await ctx.runQuery(internal.githubUser.query.by_user, {
           userId: args.userId,
           fallbackToDefault: false // Only check for user's personal account
         });
 
         if (existingUserAccount) {
-          throw new Error("User already has a GitHub account");
+          throw new Error("User already has a GitHub account connected");
         }
       }
 
+      // Check for duplicate username for the same user (or null for default)
       const existingUsername = await ctx.db
         .query("githubUser")
         .withIndex("by_user_and_username", (q) =>
@@ -31,7 +43,7 @@ export const create = internalMutation({
         .unique();
 
       if (existingUsername) {
-        throw new Error(`GitHub user with username "${args.username}" already exists for this user`);
+        throw new Error(`GitHub account already connected to another user`);
       }
 
       await ctx.db.insert("githubUser", {
