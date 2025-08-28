@@ -1,24 +1,43 @@
 import { v } from "convex/values";
-import { query } from "../_generated/server";
+import { internalQuery } from "../_generated/server";
 
-export const read = query({
-    args: {
-      userId: v.id("users"),
-    },
-    returns: v.union(
-      v.object({
-        _id: v.id("githubUser"),
-        _creationTime: v.number(),
-        userId: v.id("users"),
-        token: v.string(),
-        username: v.string(),
-      }),
-      v.null()
-    ),
-    handler: async (ctx, args) => {
-      return await ctx.db
+export const by_user = internalQuery({
+  args: {
+    userId: v.optional(v.id("users")),
+    fallbackToDefault: v.optional(v.boolean()), // If true, falls back to default if user has no GitHub account
+  },
+  returns: v.union(v.object({
+    _id: v.id("githubUser"),
+    _creationTime: v.number(),
+    userId: v.optional(v.id("users")),
+    token: v.string(),
+    username: v.string(),
+    isDefault: v.optional(v.boolean()),
+  }), v.null()),
+  handler: async (ctx, args) => {
+    // If userId is provided, try to find a GitHub user for that specific user
+    if (args.userId) {
+      const userGithubAccount = await ctx.db
         .query("githubUser")
         .withIndex("by_user", (q) => q.eq("userId", args.userId))
         .unique();
-    },
+
+      if (userGithubAccount) {
+        return userGithubAccount;
+      }
+    }
+
+    // If fallback is enabled and no user-specific account found, use default
+    if (args.fallbackToDefault) {
+      const defaultGithubAccount = await ctx.db
+        .query("githubUser")
+        .withIndex("by_default", (q) => q.eq("isDefault", true))
+        .unique();
+
+      return defaultGithubAccount;
+    }
+
+    return null;
+  },
 });
+

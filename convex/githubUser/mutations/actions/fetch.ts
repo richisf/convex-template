@@ -1,8 +1,8 @@
 "use node";
 
-import { action } from "../../_generated/server";
+import { action } from "../../../_generated/server";
 import { v } from "convex/values";
-import { internal } from "../../_generated/api";
+import { internal } from "../../../_generated/api";
 import { fetchGithubUser } from "./services/service";
 
 export const fetch = action({
@@ -20,7 +20,7 @@ export const fetch = action({
       // Fetch and validate GitHub user data
       const userData = await fetchGithubUser(args.token);
 
-      await ctx.runMutation(internal.githubUser.mutation.create, {
+      await ctx.runMutation(internal.githubUser.mutations.create.create, {
         userId: args.userId,
         token: args.token,
         username: userData.login,

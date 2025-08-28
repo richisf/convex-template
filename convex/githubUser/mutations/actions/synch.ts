@@ -1,8 +1,8 @@
 "use node";
 
-import { action } from "../../_generated/server";
+import { action } from "../../../_generated/server";
 import { v } from "convex/values";
-import { internal, api } from "../../_generated/api";
+import { internal } from "../../../_generated/api";
 import { fetchGithubUser } from "./services/service";
 
 export const synch = action({
@@ -17,7 +17,7 @@ export const synch = action({
   handler: async (ctx, args) => {
     try {
 
-      const existingRecord = await ctx.runQuery(api.githubUser.query.read, { userId: args.userId });
+      const existingRecord = await ctx.runQuery(internal.githubUser.query.by_user, { userId: args.userId, fallbackToDefault: true });
       if (!existingRecord) {
         return {
           success: false,
@@ -29,9 +29,9 @@ export const synch = action({
 
       if (userData.login !== existingRecord.username) {
 
-        await ctx.runMutation(internal.githubUser.mutation.update, {
+        await ctx.runMutation(internal.githubUser.mutations.update.update, {
           userId: args.userId,
-          token: existingRecord.token,  
+          token: existingRecord.token,
           username: userData.login,
         });
         return {
