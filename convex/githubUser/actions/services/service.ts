@@ -1,10 +1,4 @@
-/**
- * GitHub API utility functions
- * These are regular TypeScript functions that can be imported and used within actions
- * They contain the actual HTTP call logic but are not Convex functions themselves
- */
-
-export interface GitHubUser {
+export interface GithubUser {
   login: string;
   id: number;
   name?: string;
@@ -13,11 +7,7 @@ export interface GitHubUser {
 }
 
 
-/**
- * Utility function to fetch GitHub user data
- * This is a plain function that can be called from within actions
- */
-export async function fetchGitHubUserData(token: string): Promise<GitHubUser> {
+export async function fetchGithubUser(token: string): Promise<GithubUser> {
   const response = await fetch("https://api.github.com/user", {
     headers: {
       Authorization: `Bearer ${token}`,
