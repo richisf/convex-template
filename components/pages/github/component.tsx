@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import { useAction, useQuery } from "convex/react";
@@ -22,6 +22,9 @@ function GithubContent() {
   const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Prevent duplicate OAuth processing
+  const processedParamsRef = useRef<string | null>(null);
+
   const currentUser = useQuery(api.auth.currentUser);
   const createGithubUser = useAction(api.githubUser.mutations.actions.fetch.fetch);
 
@@ -31,8 +34,20 @@ function GithubContent() {
     const errorParam = searchParams.get('error');
     const successParam = searchParams.get('success');
 
+    // Create a unique key for these parameters to prevent duplicate processing
+    const paramsKey = `${code || ''}-${state || ''}-${errorParam || ''}-${successParam || ''}`;
+
+    // Skip if we've already processed these exact parameters
+    if (processedParamsRef.current === paramsKey) {
+      console.log('Skipping duplicate OAuth processing for:', paramsKey);
+      return;
+    }
+
+    // Mark these parameters as processed
+    processedParamsRef.current = paramsKey;
+
     // Debug: Log all OAuth parameters
-    console.log('OAuth parameters:', { code: !!code, state, errorParam, successParam });
+    console.log('OAuth parameters:', { code: !!code, state, errorParam, successParam, currentUser: currentUser ? 'logged_in' : currentUser === null ? 'anonymous' : 'loading' });
 
     if (errorParam) {
       const errorMessage = searchParams.get('error_message') || errorParam;
@@ -51,6 +66,12 @@ function GithubContent() {
     // Handle case where we have state but no code (user denied or error)
     if (state && !code && !errorParam) {
       console.log('OAuth cancelled or failed - state without code');
+
+      // Clean up the URL parameters
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('state');
+      window.history.replaceState({}, '', newUrl.toString());
+
       setError('GitHub authorization was cancelled or failed. Please try again.');
       return;
     }
