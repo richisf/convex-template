@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect, useRef } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import { useAction, useQuery } from "convex/react";
@@ -21,77 +21,37 @@ function GithubContent() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-
-  // Prevent duplicate OAuth processing
-  const processedParamsRef = useRef<string | null>(null);
+  const [processed, setProcessed] = useState(false);
 
   const currentUser = useQuery(api.auth.currentUser);
   const createGithubUser = useAction(api.githubUser.mutations.actions.fetch.fetch);
 
   useEffect(() => {
+    if (processed) return;
+
     const code = searchParams.get('code');
     const state = searchParams.get('state');
     const errorParam = searchParams.get('error');
     const successParam = searchParams.get('success');
 
-    // Create a unique key for these parameters to prevent duplicate processing
-    const paramsKey = `${code || ''}-${state || ''}-${errorParam || ''}-${successParam || ''}`;
-
-    // Skip if we've already processed these exact parameters
-    if (processedParamsRef.current === paramsKey) {
-      console.log('Skipping duplicate OAuth processing for:', paramsKey);
-      return;
-    }
-
-    // Mark these parameters as processed
-    processedParamsRef.current = paramsKey;
-
-    // Debug: Log all OAuth parameters
-    console.log('OAuth parameters:', { code: !!code, state, errorParam, successParam, currentUser: currentUser ? 'logged_in' : currentUser === null ? 'anonymous' : 'loading' });
+    console.log('OAuth check:', { code: !!code, state: !!state, error: errorParam, success: successParam });
 
     if (errorParam) {
-      const errorMessage = searchParams.get('error_message') || errorParam;
-      setError(decodeURIComponent(errorMessage));
+      setError(searchParams.get('error_message') || errorParam);
+      setProcessed(true);
       return;
     }
 
     if (successParam === 'github_connected') {
       setSuccess('GitHub account successfully connected!');
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 2000);
+      setProcessed(true);
+      setTimeout(() => router.push('/dashboard'), 2000);
       return;
     }
 
-    // Handle case where we have state but no code (user denied or error)
-    if (state && !code && !errorParam) {
-      console.log('OAuth cancelled or failed - state without code');
-
-      // Clean up the URL parameters
-      const newUrl = new URL(window.location.href);
-      newUrl.searchParams.delete('state');
-      window.history.replaceState({}, '', newUrl.toString());
-
-      setError('GitHub authorization was cancelled or failed. Please try again.');
-      return;
-    }
-
-    if (code && state) {
-      console.log('OAuth callback received:', {
-        codeLength: code.length,
-        state,
-        currentUser: currentUser ? 'logged_in' : currentUser === null ? 'anonymous' : 'loading'
-      });
-
-      if (!state || state.length < 10) {
-        setError('Invalid state parameter');
-        return;
-      }
-
-      if (currentUser === undefined) {
-        return;
-      }
-
+    if (code && state && currentUser !== undefined) {
+      setProcessed(true);
+      
       (async () => {
         try {
           setIsLoading(true);
@@ -107,31 +67,21 @@ function GithubContent() {
           }
 
           setSuccess('GitHub account successfully connected!');
-
-          const newUrl = new URL(window.location.href);
-          newUrl.searchParams.delete('code');
-          newUrl.searchParams.delete('state');
-          window.history.replaceState({}, '', newUrl.toString());
+          
+          // Clean URL
+          const url = new URL(window.location.href);
+          url.searchParams.delete('code');
+          url.searchParams.delete('state');
+          window.history.replaceState({}, '', url.toString());
 
         } catch (err) {
-          console.error('OAuth callback error:', err);
-          const message = err instanceof Error ? err.message : 'Failed to connect GitHub account';
-
-          if (message.includes('already has a GitHub account')) {
-            setError('You already have a GitHub account connected.');
-          } else if (message.includes('already connected to another user')) {
-            setError('This GitHub account is already connected to another user.');
-          } else if (message.includes('expired')) {
-            setError('OAuth session expired. Please try again.');
-          } else {
-            setError(message);
-          }
-
+          console.error('OAuth error:', err);
+          setError(err instanceof Error ? err.message : 'Failed to connect GitHub account');
           setIsLoading(false);
         }
       })();
     }
-  }, [searchParams, router, createGithubUser, currentUser]);
+  }, [searchParams, router, createGithubUser, currentUser, processed]);
 
   const initiateGithubOAuth = async () => {
     try {
