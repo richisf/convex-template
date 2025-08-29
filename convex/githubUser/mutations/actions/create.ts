@@ -3,9 +3,10 @@
 import { action } from "../../../_generated/server";
 import { v } from "convex/values";
 import { internal } from "../../../_generated/api";
-import { fetchGithubUser, exchangeCodeForToken } from "./services/service";
+import { fetchGithubUser } from "./services/fetchGithubUser";
+import { exchangeCodeForToken } from "./services/exchangeCodeForToken";
 
-export const fetch = action({
+export const create = action({
   args: {
     userId: v.optional(v.id("users")), // Optional - if not provided, creates default account
     code: v.string(), // OAuth authorization code instead of token

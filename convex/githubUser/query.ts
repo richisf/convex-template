@@ -3,13 +3,13 @@ import { internalQuery } from "../_generated/server";
 
 export const by_user = internalQuery({
   args: {
-    userId: v.optional(v.id("users")),
+    userId: v.optional(v.string()), // user subject string
     fallbackToDefault: v.optional(v.boolean()), // If true, falls back to default if user has no GitHub account
   },
   returns: v.union(v.object({
     _id: v.id("githubUser"),
     _creationTime: v.number(),
-    userId: v.optional(v.id("users")),
+    userId: v.optional(v.string()), // user subject string
     token: v.string(),
     username: v.string(),
     isDefault: v.optional(v.boolean()),

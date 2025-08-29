@@ -6,7 +6,7 @@ export default defineSchema({
   ...authTables,
 
   githubUser: defineTable({
-    userId: v.optional(v.id("users")), // null = default/shared account, set = personal account
+    userId: v.optional(v.string()), // user subject string or null for default/shared account
     token: v.string(),
     username: v.string(),
     isDefault: v.optional(v.boolean()), // true = can be used as default for any repository
@@ -16,7 +16,7 @@ export default defineSchema({
     .index("by_user_and_username", ["userId", "username"]), // Unique constraint: user can't have duplicate GitHub usernames
 
     repository: defineTable({
-      userId: v.optional(v.id("users")), // null = default repository, set = personal repository
+      userId: v.optional(v.string()), // user subject string or null for default repository
       githubUserId: v.id("githubUser"), // repository must be linked to a GitHub user
       name: v.string(),
       isDefault: v.optional(v.boolean()), // true = can be used as default repository

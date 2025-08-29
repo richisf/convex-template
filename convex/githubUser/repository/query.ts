@@ -1,17 +1,17 @@
-import { query } from "../../_generated/server";
+import { internalQuery } from "../../_generated/server";
 import { v } from "convex/values";
 
 
-export const by_user = query({
+export const by_user = internalQuery({
   args: {
-    userId: v.optional(v.id("users")), // Now optional to support default repositories
+    userId: v.optional(v.string()), // user subject string or null for default repositories
     fallbackToDefault: v.optional(v.boolean()), // If true, falls back to default if user has no repositories
   },
   returns: v.array(
     v.object({
       _id: v.id("repository"),
       _creationTime: v.number(),
-      userId: v.optional(v.id("users")), // Now optional
+      userId: v.optional(v.string()), // user subject string or null
       githubUserId: v.id("githubUser"),
       name: v.string(),
       isDefault: v.optional(v.boolean()), // New field
@@ -52,16 +52,16 @@ export const by_user = query({
   },
 });
 
-export const by_user_and_name = query({
+export const by_user_and_name = internalQuery({
   args: {
-    userId: v.optional(v.id("users")), // Now optional
+    userId: v.optional(v.string()), // user subject string or null
     name: v.string(),
   },
   returns: v.union(
     v.object({
       _id: v.id("repository"),
       _creationTime: v.number(),
-      userId: v.optional(v.id("users")), // Now optional
+      userId: v.optional(v.string()), // user subject string or null
       githubUserId: v.id("githubUser"),
       name: v.string(),
       isDefault: v.optional(v.boolean()), // New field

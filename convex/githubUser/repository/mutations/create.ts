@@ -1,11 +1,11 @@
-import { mutation } from "../../../_generated/server";
+import { internalMutation } from "../../../_generated/server";
 import { v } from "convex/values";
 import { internal } from "../../../_generated/api";
 import { Doc, Id } from "../../../_generated/dataModel";
 
-export const create = mutation({
+export const create = internalMutation({
   args: {
-    userId: v.optional(v.id("users")), // Now optional to support default repositories
+    userId: v.optional(v.string()), // User subject string or null for default repositories
     name: v.string(),
     isDefault: v.optional(v.boolean()), // New field to mark as default repository
   },

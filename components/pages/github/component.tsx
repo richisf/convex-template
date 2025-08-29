@@ -4,8 +4,8 @@ import { Suspense, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import { useAction, useQuery } from "convex/react";
-import { api } from "../../../convex/_generated/api";
-import { Id } from "../../../convex/_generated/dataModel";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
 
 export function Github() {
   return (
@@ -22,7 +22,7 @@ function GithubContent() {
   const [processed, setProcessed] = useState(false);
 
   const currentUser = useQuery(api.auth.currentUser);
-  const createGithubUser = useAction(api.githubUser.mutations.actions.fetch.fetch);
+  const createGithubUser = useAction(api.githubUser.mutations.actions.create.create);
 
   useEffect(() => {
     if (processed) return;

@@ -7,7 +7,7 @@ import {
 const isSignInPage = createRouteMatcher(["/signin"]);
 const isGithubOAuthPage = createRouteMatcher(["/github"]);
 const isGithubOAuthCallback = createRouteMatcher(["/github/callback"]);
-const isProtectedRoute = createRouteMatcher(["/", "/server"]);
+const isProtectedRoute = createRouteMatcher(["/server"]);
 
 export default convexAuthNextjsMiddleware(async (request, { convexAuth }) => {
   // Completely skip ALL GitHub OAuth routes - don't even check authentication
