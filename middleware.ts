@@ -10,9 +10,15 @@ const isGithubOAuthCallback = createRouteMatcher(["/api/github/callback", "/api/
 const isProtectedRoute = createRouteMatcher(["/", "/server"]);
 
 export default convexAuthNextjsMiddleware(async (request, { convexAuth }) => {
-  // Don't process GitHub OAuth callbacks or pages - let them work normally
+  // Completely skip OAuth routes - don't even check authentication
   if (isGithubOAuthPage(request) || isGithubOAuthCallback(request)) {
     return; // Skip all middleware processing for OAuth flows
+  }
+  
+  // Skip OAuth API routes by path check as well
+  if (request.nextUrl.pathname.includes('/api/test-oauth') || 
+      request.nextUrl.pathname.includes('/api/github')) {
+    return;
   }
   
   if (isSignInPage(request) && (await convexAuth.isAuthenticated())) {
@@ -25,6 +31,10 @@ export default convexAuthNextjsMiddleware(async (request, { convexAuth }) => {
 
 export const config = {
   // The following matcher runs middleware on all routes
-  // except static assets.
-  matcher: ["/((?!.*\\..*|_next).*)", "/", "/(api|trpc)(.*)"],
+  // except static assets and OAuth routes.
+  matcher: [
+    "/((?!.*\\.|_next|api/test-oauth|api/github).*)", 
+    "/", 
+    "/(api|trpc)(?!/test-oauth|/github)(.*)"
+  ],
 };
