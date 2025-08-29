@@ -113,7 +113,7 @@ function GithubContent() {
       // Generate random state and OAuth URL
       const state = Math.random().toString(36).substring(2) + Date.now().toString(36);
       const clientId = 'Ov23li8Gt88cHjYDTWlT';
-      const callbackUrl = `${window.location.origin}/github`; // Use dynamic origin
+      const callbackUrl = `${window.location.origin}/github`;
       const scope = "repo,user:email";
 
       console.log('OAuth URL details:', {
@@ -123,6 +123,15 @@ function GithubContent() {
         state: state.substring(0, 10) + '...',
         fullUrl: `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(callbackUrl)}&scope=${scope}&state=${state.substring(0, 10)}...`
       });
+
+      // Log the exact URL we're redirecting to for debugging
+      const fullOAuthUrl = `https://github.com/login/oauth/authorize?` +
+        `client_id=${encodeURIComponent(clientId)}&` +
+        `redirect_uri=${encodeURIComponent(callbackUrl)}&` +
+        `scope=${encodeURIComponent(scope)}&` +
+        `state=${encodeURIComponent(state)}`;
+      
+      console.log('Exact OAuth URL:', fullOAuthUrl);
 
       const url = `https://github.com/login/oauth/authorize?` +
         `client_id=${encodeURIComponent(clientId)}&` +
