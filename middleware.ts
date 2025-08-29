@@ -30,11 +30,6 @@ export default convexAuthNextjsMiddleware(async (request, { convexAuth }) => {
 
 export const config = {
   // The following matcher runs middleware on all routes
-  // except static assets and GitHub OAuth routes.
-  matcher: [
-    "/((?!.*\\.|_next|github/callback).*)",
-    "/",
-    "/api/*",
-    "/trpc/*"
-  ],
+  // except static assets and OAuth callback routes.
+  matcher: ["/((?!.*\\.|_next|github/callback).*)", "/", "/(api|trpc)(.*)"],
 };
