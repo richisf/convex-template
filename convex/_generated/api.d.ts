@@ -14,7 +14,6 @@ import type {
   FunctionReference,
 } from "convex/server";
 import type * as auth from "../auth.js";
-import type * as github from "../github.js";
 import type * as githubUser_mutations_actions_fetch from "../githubUser/mutations/actions/fetch.js";
 import type * as githubUser_mutations_actions_services_service from "../githubUser/mutations/actions/services/service.js";
 import type * as githubUser_mutations_actions_synch from "../githubUser/mutations/actions/synch.js";
@@ -40,7 +39,6 @@ import type * as http from "../http.js";
  */
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
-  github: typeof github;
   "githubUser/mutations/actions/fetch": typeof githubUser_mutations_actions_fetch;
   "githubUser/mutations/actions/services/service": typeof githubUser_mutations_actions_services_service;
   "githubUser/mutations/actions/synch": typeof githubUser_mutations_actions_synch;

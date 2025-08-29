@@ -1,10 +1,11 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
-import { useMutation } from "convex/react";
+import { useAction, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
+import { Id } from "../../../convex/_generated/dataModel";
 
 export function Github() {
   return (
@@ -21,34 +22,133 @@ function GithubContent() {
   const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const generateOAuthUrl = useMutation(api.github.generateGithubOAuthUrl);
+  // Get current user identity
+  const currentUser = useQuery(api.auth.currentUser);
+  const createGithubUser = useAction(api.githubUser.mutations.actions.fetch.fetch);
 
-  // Handle OAuth errors and success from URL parameters
+  // Generate GitHub OAuth URL directly in frontend
+  const generateGithubOAuthUrl = useCallback(() => {
+    // Generate state parameter: userId_timestamp or default_timestamp
+    const timestamp = Date.now();
+    const state = currentUser ? `${currentUser.subject}_${timestamp}` : `default_${timestamp}`;
+
+    // GitHub OAuth URL
+    const clientId = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID;
+    if (!clientId) {
+      throw new Error("GitHub client ID not configured");
+    }
+
+    const callbackUrl = `${process.env.SITE_URL || "http://localhost:3000"}/github`;
+    const scope = "repo,user:email"; // Adjust scopes as needed
+
+    const url = `https://github.com/login/oauth/authorize?` +
+      `client_id=${encodeURIComponent(clientId)}&` +
+      `redirect_uri=${encodeURIComponent(callbackUrl)}&` +
+      `scope=${encodeURIComponent(scope)}&` +
+      `state=${encodeURIComponent(state)}`;
+
+    return { url, state };
+  }, [currentUser]);
+
+  const handleOAuthCallback = useCallback(async (code: string, state: string) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Parse state to determine if this is for a default account
+      const [userIdOrDefault, timestampStr] = state.split('_');
+      const timestamp = parseInt(timestampStr);
+
+      // Validate state
+      if (!userIdOrDefault || !timestamp || timestamp < 1000000000000) {
+        throw new Error('Invalid state parameter');
+      }
+
+      // Check state expiration (10 minutes)
+      if (Date.now() - timestamp > 10 * 60 * 1000) {
+        throw new Error('OAuth session expired');
+      }
+
+      // Call Convex to create GitHub user
+      const isDefaultAccount = userIdOrDefault === 'default';
+      const result = await createGithubUser({
+        userId: isDefaultAccount ? undefined : (userIdOrDefault as Id<"users">),
+        code: code,
+      });
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to connect GitHub account');
+      }
+
+      setSuccess('GitHub account successfully connected!');
+      
+      // Clean up URL parameters
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('code');
+      newUrl.searchParams.delete('state');
+      window.history.replaceState({}, '', newUrl.toString());
+
+      // Redirect after success
+      setTimeout(() => {
+        const redirectPath = isDefaultAccount ? '/' : '/dashboard';
+        router.push(redirectPath);
+      }, 2000);
+
+    } catch (err) {
+      console.error('OAuth callback error:', err);
+      const message = err instanceof Error ? err.message : 'Failed to connect GitHub account';
+      
+      // Map specific errors to user-friendly messages
+      if (message.includes('already has a GitHub account')) {
+        setError('You already have a GitHub account connected.');
+      } else if (message.includes('already connected to another user')) {
+        setError('This GitHub account is already connected to another user.');
+      } else if (message.includes('expired')) {
+        setError('OAuth session expired. Please try again.');
+      } else {
+        setError(message);
+      }
+      
+      setIsLoading(false);
+    }
+  }, [createGithubUser, router]);
+
+  // Handle OAuth callback from GitHub
   useEffect(() => {
+    const code = searchParams.get('code');
+    const state = searchParams.get('state');
     const errorParam = searchParams.get('error');
     const successParam = searchParams.get('success');
     
+    // Handle OAuth errors
     if (errorParam) {
       const errorMessage = searchParams.get('error_message') || errorParam;
       setError(decodeURIComponent(errorMessage));
+      return;
     }
     
+    // Handle success from previous OAuth flow
     if (successParam === 'github_connected') {
       setSuccess('GitHub account successfully connected!');
-      // Redirect to dashboard after a short delay
       setTimeout(() => {
         router.push('/dashboard');
       }, 2000);
+      return;
     }
-  }, [searchParams, router]);
+
+    // Handle OAuth callback with code
+    if (code && state) {
+      handleOAuthCallback(code, state);
+    }
+  }, [searchParams, router, handleOAuthCallback]);
 
   const initiateGithubOAuth = async () => {
     try {
       setIsLoading(true);
       setError(null);
       
-      // Get the OAuth URL from Convex (includes user state)
-      const { url } = await generateOAuthUrl();
+      // Generate OAuth URL directly in frontend
+      const { url } = generateGithubOAuthUrl();
       
       // Redirect to GitHub OAuth
       window.location.href = url;
