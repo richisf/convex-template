@@ -1,15 +1,15 @@
 "use client";
 
-import { useAction, useQuery } from "convex/react";
+import { useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useState } from "react";
 
 interface CreateRepositoryProps {
+  currentUser: { subject: string; email?: string; name?: string } | null;
   onRepositoryCreated?: () => void;
 }
 
-export function CreateRepository({ onRepositoryCreated }: CreateRepositoryProps) {
-  const currentUser = useQuery(api.auth.currentUser);
+export function CreateRepository({ currentUser, onRepositoryCreated }: CreateRepositoryProps) {
   const createRepository = useAction(api.githubUser.repository.mutations.actions.create.create);
 
   const [isCreating, setIsCreating] = useState(false);
@@ -32,14 +32,6 @@ export function CreateRepository({ onRepositoryCreated }: CreateRepositoryProps)
     }
 
     // Check user authentication state
-    if (currentUser === undefined) {
-      setCreateResult({
-        success: false,
-        error: "Loading user information..."
-      });
-      return;
-    }
-
     if (!currentUser?.subject) {
       setCreateResult({
         success: false,
@@ -83,17 +75,15 @@ export function CreateRepository({ onRepositoryCreated }: CreateRepositoryProps)
           value={repoName}
           onChange={(e) => setRepoName(e.target.value)}
           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-foreground"
-          disabled={isCreating || currentUser === undefined}
+          disabled={isCreating}
         />
 
         <button
           className="bg-blue-600 hover:bg-blue-700 text-white rounded-md px-4 py-2 disabled:opacity-50 w-full"
           onClick={handleCreateNamedRepository}
-          disabled={isCreating || !repoName.trim() || currentUser === undefined}
+          disabled={isCreating || !repoName.trim()}
         >
-          {isCreating ? "Creating Repository..." :
-           currentUser === undefined ? "Loading..." :
-           "Create Repository from Template"}
+          {isCreating ? "Creating Repository..." : "Create Repository from Template"}
         </button>
       </div>
 
