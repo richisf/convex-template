@@ -12,7 +12,9 @@ export async function GET(request: NextRequest) {
       state: state ? 'present' : 'missing',
       error: error || 'none',
       fullURL: request.url,
-      allParams: Object.fromEntries(searchParams.entries())
+      allParams: Object.fromEntries(searchParams.entries()),
+      method: request.method,
+      headers: Object.fromEntries(request.headers.entries())
     });
 
     // Handle OAuth errors
