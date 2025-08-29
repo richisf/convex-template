@@ -33,12 +33,12 @@ function GithubContent() {
     const state = currentUser ? `${currentUser.subject}_${timestamp}` : `default_${timestamp}`;
 
     // GitHub OAuth URL
-    const clientId = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID;
+    const clientId = 'Ov23li8Gt88cHjYDTWlT'
     if (!clientId) {
       throw new Error("GitHub client ID not configured");
     }
 
-    const callbackUrl = `${process.env.SITE_URL || "http://localhost:3000"}/github`;
+    const callbackUrl = `https://convex-template-eosin.vercel.app/github`;
     const scope = "repo,user:email"; // Adjust scopes as needed
 
     const url = `https://github.com/login/oauth/authorize?` +
