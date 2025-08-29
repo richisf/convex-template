@@ -54,33 +54,33 @@ function GithubContent() {
     // Handle OAuth callback - only process if we have both code and state, and user query is resolved
     if (code && state && currentUser !== undefined) {
       setProcessed(true);
-      setIsLoading(true);
-      setError(null);
-      
+          setIsLoading(true);
+          setError(null);
+
       createGithubUser({
-        userId: currentUser?.subject as Id<"users"> | undefined,
-        code: code,
+            userId: currentUser?.subject as Id<"users"> | undefined,
+            code: code,
       })
       .then((result) => {
-        if (!result.success) {
-          throw new Error(result.error || 'Failed to connect GitHub account');
-        }
+          if (!result.success) {
+            throw new Error(result.error || 'Failed to connect GitHub account');
+          }
 
-        setSuccess('GitHub account successfully connected!');
+          setSuccess('GitHub account successfully connected!');
         setIsLoading(false);
-        
+          
         // Clean URL and redirect after success
-        const url = new URL(window.location.href);
-        url.searchParams.delete('code');
-        url.searchParams.delete('state');
-        window.history.replaceState({}, '', url.toString());
-        
+          const url = new URL(window.location.href);
+          url.searchParams.delete('code');
+          url.searchParams.delete('state');
+          window.history.replaceState({}, '', url.toString());
+
         setTimeout(() => router.push('/dashboard'), 2000);
       })
       .catch((err) => {
-        console.error('OAuth error:', err);
-        setError(err instanceof Error ? err.message : 'Failed to connect GitHub account');
-        setIsLoading(false);
+          console.error('OAuth error:', err);
+          setError(err instanceof Error ? err.message : 'Failed to connect GitHub account');
+          setIsLoading(false);
       });
     }
   }, [searchParams, router, createGithubUser, currentUser, processed]);
@@ -94,7 +94,7 @@ function GithubContent() {
       const state = Math.random().toString(36).substring(2) + Date.now().toString(36);
       const clientId = 'Ov23liMY9jf9X63IcI2e';
       const callbackUrl = `${window.location.origin}/api/test-oauth`;
-      const scope = "user,repo";
+      const scope = ""; // No scopes - minimal test
 
       const url = `https://github.com/login/oauth/authorize?` +
         `client_id=${encodeURIComponent(clientId)}&` +
