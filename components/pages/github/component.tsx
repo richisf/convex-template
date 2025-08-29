@@ -94,7 +94,7 @@ function GithubContent() {
       const state = Math.random().toString(36).substring(2) + Date.now().toString(36);
       const clientId = 'Ov23li8Gt88cHjYDTWlT';
       const callbackUrl = `${window.location.origin}/github`;
-      const scope = "repo,user:email";
+      const scope = "user";
 
 
 
