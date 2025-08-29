@@ -39,8 +39,22 @@ function GithubContent() {
       state: state ? 'present' : 'missing', 
       error: errorParam, 
       success: successParam,
-      currentUser: currentUser ? 'loaded' : 'loading'
+      currentUser: currentUser === undefined ? 'loading' : currentUser ? 'logged-in' : 'anonymous'
     });
+    
+    // Debug: log the actual URL and all parameters
+    console.log('Full URL:', window.location.href);
+    console.log('All search params:', Object.fromEntries(searchParams.entries()));
+
+    // Clean up stale OAuth parameters if we have state but no code
+    if (state && !code && !errorParam && !successParam) {
+      console.log('Cleaning up stale OAuth parameters');
+      const url = new URL(window.location.href);
+      url.searchParams.delete('state');
+      window.history.replaceState({}, '', url.toString());
+      setProcessed(true);
+      return;
+    }
 
     // Handle OAuth errors
     if (errorParam) {
