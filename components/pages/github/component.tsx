@@ -34,27 +34,7 @@ function GithubContent() {
     const errorParam = searchParams.get('error');
     const successParam = searchParams.get('success');
 
-    console.log('OAuth check:', { 
-      code: code ? 'present' : 'missing', 
-      state: state ? 'present' : 'missing', 
-      error: errorParam, 
-      success: successParam,
-      currentUser: currentUser === undefined ? 'loading' : currentUser ? 'logged-in' : 'anonymous'
-    });
-    
-    // Debug: log the actual URL and all parameters
-    console.log('Full URL:', window.location.href);
-    console.log('All search params:', Object.fromEntries(searchParams.entries()));
 
-    // Clean up stale OAuth parameters if we have state but no code
-    if (state && !code && !errorParam && !successParam) {
-      console.log('Cleaning up stale OAuth parameters');
-      const url = new URL(window.location.href);
-      url.searchParams.delete('state');
-      window.history.replaceState({}, '', url.toString());
-      setProcessed(true);
-      return;
-    }
 
     // Handle OAuth errors
     if (errorParam) {
@@ -71,7 +51,7 @@ function GithubContent() {
       return;
     }
 
-    // Handle OAuth callback - only process if we have both code and state, and user is loaded
+    // Handle OAuth callback - only process if we have both code and state, and user query is resolved
     if (code && state && currentUser !== undefined) {
       setProcessed(true);
       setIsLoading(true);
@@ -116,22 +96,7 @@ function GithubContent() {
       const callbackUrl = `${window.location.origin}/github`;
       const scope = "repo,user:email";
 
-      console.log('OAuth URL details:', {
-        clientId,
-        callbackUrl,
-        scope,
-        state: state.substring(0, 10) + '...',
-        fullUrl: `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(callbackUrl)}&scope=${scope}&state=${state.substring(0, 10)}...`
-      });
 
-      // Log the exact URL we're redirecting to for debugging
-      const fullOAuthUrl = `https://github.com/login/oauth/authorize?` +
-        `client_id=${encodeURIComponent(clientId)}&` +
-        `redirect_uri=${encodeURIComponent(callbackUrl)}&` +
-        `scope=${encodeURIComponent(scope)}&` +
-        `state=${encodeURIComponent(state)}`;
-      
-      console.log('Exact OAuth URL:', fullOAuthUrl);
 
       const url = `https://github.com/login/oauth/authorize?` +
         `client_id=${encodeURIComponent(clientId)}&` +
