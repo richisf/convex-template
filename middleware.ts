@@ -6,12 +6,13 @@ import {
 
 const isSignInPage = createRouteMatcher(["/signin"]);
 const isGithubOAuthPage = createRouteMatcher(["/github"]);
+const isGithubOAuthCallback = createRouteMatcher(["/api/github/callback", "/api/test-oauth"]);
 const isProtectedRoute = createRouteMatcher(["/", "/server"]);
 
 export default convexAuthNextjsMiddleware(async (request, { convexAuth }) => {
-  // Don't redirect GitHub OAuth callbacks - let them process normally
-  if (isGithubOAuthPage(request)) {
-    return; // Let the request continue without any redirects
+  // Don't process GitHub OAuth callbacks or pages - let them work normally
+  if (isGithubOAuthPage(request) || isGithubOAuthCallback(request)) {
+    return; // Skip all middleware processing for OAuth flows
   }
   
   if (isSignInPage(request) && (await convexAuth.isAuthenticated())) {
