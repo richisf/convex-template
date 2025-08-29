@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { useAction, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
+import { DefaultRepositoryCreator } from "./default/component";
 
 export function GithubCallback() {
   const router = useRouter();
@@ -43,6 +44,7 @@ export function GithubCallback() {
       })
         .then((result) => {
           if (!result.success) throw new Error(result.error || 'Failed to connect GitHub account');
+
           setSuccess('GitHub account successfully connected!');
           setLoading(false);
 
@@ -92,11 +94,23 @@ export function GithubCallback() {
   if (success) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="bg-white rounded-lg shadow-md p-8 text-center">
-          <div className="text-green-500 mb-4">✅</div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Success!</h2>
-          <p className="text-gray-600 mb-4">{success}</p>
-          <p className="text-sm text-gray-500">Redirecting to dashboard...</p>
+        <div className="bg-white rounded-lg shadow-md p-8 max-w-md">
+          <div className="text-center mb-6">
+            <div className="text-green-500 mb-2">✅</div>
+            <h2 className="text-lg font-semibold text-gray-900 mb-1">GitHub Connected!</h2>
+            <p className="text-sm text-gray-600">{success}</p>
+          </div>
+
+          {!currentUser && <DefaultRepositoryCreator />}
+
+          <div className="text-center mt-6">
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="text-sm text-gray-500 hover:text-gray-700 underline"
+            >
+              Skip to Dashboard →
+            </button>
+          </div>
         </div>
       </div>
     );
