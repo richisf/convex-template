@@ -10,11 +10,7 @@ export async function GET(request: NextRequest) {
     console.log('GitHub OAuth callback received:', {
       code: code ? 'present' : 'missing',
       state: state ? 'present' : 'missing',
-      error: error || 'none',
-      fullURL: request.url,
-      allParams: Object.fromEntries(searchParams.entries()),
-      method: request.method,
-      headers: Object.fromEntries(request.headers.entries())
+      error: error || 'none'
     });
 
     // Handle OAuth errors

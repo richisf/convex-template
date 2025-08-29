@@ -93,8 +93,8 @@ function GithubContent() {
       // Generate random state and OAuth URL
       const state = Math.random().toString(36).substring(2) + Date.now().toString(36);
       const clientId = 'Ov23liMY9jf9X63IcI2e';
-      const callbackUrl = `${window.location.origin}/api/test-oauth`;
-      const scope = "repo, user"; // No scopes - minimal test
+      const callbackUrl = `${window.location.origin}/github/callback`;
+      const scope = "user,repo";
 
       const url = `https://github.com/login/oauth/authorize?` +
         `client_id=${encodeURIComponent(clientId)}&` +
@@ -114,16 +114,7 @@ function GithubContent() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="w-full max-w-md p-6">
-        {/* Debug info - visible on page */}
-        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md text-xs">
-          <div><strong>Debug Info:</strong></div>
-          <div>URL: {typeof window !== 'undefined' ? window.location.href : 'loading...'}</div>
-          <div>Code: {searchParams.get('code') || 'missing'}</div>
-          <div>State: {searchParams.get('state') || 'missing'}</div>
-          <div>Error: {searchParams.get('error') || 'none'}</div>
-          <div>User: {currentUser === undefined ? 'loading' : currentUser ? 'logged-in' : 'anonymous'}</div>
-          <div>Processed: {processed.toString()}</div>
-        </div>
+
         
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="text-center mb-6">
