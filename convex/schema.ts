@@ -26,5 +26,15 @@ export default defineSchema({
       .index("by_user_and_github_user", ["userId", "githubUserId"])
       .index("by_user_and_name", ["userId", "name"]) // Unique constraint: user can't have duplicate repository names
       .index("by_default", ["isDefault"]), // Unique constraint: only one default repository
-  
-});
+
+      machine: defineTable({
+        repositoryId: v.id("repository"), // Machine belongs to a repository
+        name: v.string(), // Machine instance name in GCP
+        zone: v.string(), // GCP zone (needed to manage VM)
+        state: v.string(), // "running", "stopped", "pending", "terminated"
+      })
+        .index("by_repository", ["repositoryId"])
+        .index("by_repository_and_name", ["repositoryId", "name"]) // Unique VM name per repository
+        .index("by_state", ["state"]) // For filtering VMs by state
+
+  });

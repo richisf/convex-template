@@ -90,4 +90,24 @@ export const by_user_and_name = internalQuery({
   },
 });
 
+export const by_id = internalQuery({
+  args: {
+    repositoryId: v.id("repository"),
+  },
+  returns: v.union(
+    v.object({
+      _id: v.id("repository"),
+      _creationTime: v.number(),
+      userId: v.optional(v.string()),
+      githubUserId: v.id("githubUser"),
+      name: v.string(),
+      isDefault: v.optional(v.boolean()),
+    }),
+    v.null()
+  ),
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.repositoryId);
+  },
+});
+
 

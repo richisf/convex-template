@@ -60,6 +60,10 @@ repository: defineTable({
   githubUserId: v.id("githubUser"),  // Foreign key relationship
   ...
 })
+machine: defineTable({
+  repositoryId: v.id("repository"),  // Foreign key relationship
+  ...
+})
 
 // Results in:
 convex/
@@ -89,6 +93,17 @@ convex/
 │       │   ├── create.ts
 │       │   ├── update.ts
 │       │   └── remove.ts
+│       └── machine/             # Nested grandchild table
+│           ├── query.ts
+│           ├── mutations/
+│           │   ├── actions/
+│           │   │   ├── services/
+│           │   │   │   ├── createVM.ts
+│           │   │   │   └── manageVM.ts
+│           │   │   └── create.ts   # Main machine action router
+│           │   ├── create.ts
+│           │   ├── update.ts
+│           │   └── remove.ts
 ```
 
 ## File Creation Checklist
