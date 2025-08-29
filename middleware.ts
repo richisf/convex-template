@@ -35,6 +35,7 @@ export const config = {
   matcher: [
     "/((?!.*\\.|_next|api/test-oauth|api/github).*)", 
     "/", 
-    "/(api|trpc)(?!/test-oauth|/github)(.*)"
+    "/api/((?!test-oauth|github).*)",
+    "/trpc/(.*)"
   ],
 };
