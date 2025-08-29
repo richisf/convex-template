@@ -5,7 +5,7 @@ import { api } from "@/convex/_generated/api";
 import { useState } from "react";
 
 interface CreateRepositoryProps {
-  currentUser: { subject: string; email?: string; name?: string } | null;
+  currentUser: { subject: string; issuer: string; tokenIdentifier?: string; email?: string; name?: string } | null;
   onRepositoryCreated?: () => void;
 }
 
