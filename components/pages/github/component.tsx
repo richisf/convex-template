@@ -93,10 +93,8 @@ function GithubContent() {
       // Generate random state and OAuth URL
       const state = Math.random().toString(36).substring(2) + Date.now().toString(36);
       const clientId = 'Ov23li8Gt88cHjYDTWlT';
-      const callbackUrl = `${window.location.origin}/github`;
+      const callbackUrl = `${window.location.origin}/api/github/callback`;
       const scope = "user";
-
-
 
       const url = `https://github.com/login/oauth/authorize?` +
         `client_id=${encodeURIComponent(clientId)}&` +
