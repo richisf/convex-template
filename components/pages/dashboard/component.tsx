@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { api } from "@/convex/_generated/api";
 import { CreateRepository } from "./createRepository/component";
-import { SignOut } from "./singout/component";
+import { SignOut } from "./singOut/component";
 
 export function Dashboard() {
   const currentUser = useQuery(api.auth.currentUser);
