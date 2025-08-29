@@ -1,7 +1,82 @@
-import { internalQuery } from "../../_generated/server";
+import { internalQuery, query } from "../../_generated/server";
 import { v } from "convex/values";
 
 
+// Public queries for client-side access
+export const getDefaultRepository = query({
+  args: {},
+  returns: v.union(
+    v.object({
+      _id: v.id("repository"),
+      _creationTime: v.number(),
+      userId: v.optional(v.string()),
+      githubUserId: v.id("githubUser"),
+      name: v.string(),
+      isDefault: v.optional(v.boolean()),
+    }),
+    v.null()
+  ),
+  handler: async (ctx) => {
+    const defaultRepo = await ctx.db
+      .query("repository")
+      .withIndex("by_default", (q) => q.eq("isDefault", true))
+      .unique();
+
+    return defaultRepo;
+  },
+});
+
+export const getRepositoriesByUser = query({
+  args: {
+    userId: v.optional(v.string()),
+    fallbackToDefault: v.optional(v.boolean()),
+  },
+  returns: v.array(
+    v.object({
+      _id: v.id("repository"),
+      _creationTime: v.number(),
+      userId: v.optional(v.string()),
+      githubUserId: v.id("githubUser"),
+      name: v.string(),
+      isDefault: v.optional(v.boolean()),
+    })
+  ),
+  handler: async (ctx, args) => {
+    // If userId is provided, get user's repositories
+    if (args.userId) {
+      const userRepos = await ctx.db
+        .query("repository")
+        .withIndex("by_user", (q) => q.eq("userId", args.userId))
+        .collect();
+
+      // If fallback is enabled and no user repositories, include default
+      if (args.fallbackToDefault && userRepos.length === 0) {
+        const defaultRepo = await ctx.db
+          .query("repository")
+          .withIndex("by_default", (q) => q.eq("isDefault", true))
+          .unique();
+
+        return defaultRepo ? [defaultRepo] : [];
+      }
+
+      return userRepos;
+    }
+
+    // If no userId provided, return default repository if it exists
+    if (args.fallbackToDefault) {
+      const defaultRepo = await ctx.db
+        .query("repository")
+        .withIndex("by_default", (q) => q.eq("isDefault", true))
+        .unique();
+
+      return defaultRepo ? [defaultRepo] : [];
+    }
+
+    return [];
+  },
+});
+
+// Internal queries for server-side use
 export const by_user = internalQuery({
   args: {
     userId: v.optional(v.string()), // user subject string or null for default repositories

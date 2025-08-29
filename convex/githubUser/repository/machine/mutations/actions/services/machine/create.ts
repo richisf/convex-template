@@ -36,7 +36,7 @@ export interface MachineState {
 
 
 export async function createMachine(name: string, zone: string): Promise<MachineState> {
-  const decoded = Buffer.from(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON_BASE64!, 'base64').toString();
+  const decoded = Buffer.from(process.env.GOOGLE_APPLICATION_CREDENTIALS!, 'base64').toString();
   const credentials = JSON.parse(decoded) as GoogleCredentials;
   const gcpProjectId = credentials.project_id;
 

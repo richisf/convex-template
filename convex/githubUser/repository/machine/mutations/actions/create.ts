@@ -32,7 +32,6 @@ export const create = action({
         throw new Error(`Repository not found: ${args.repositoryId}`);
       }
 
-      // Call the service function that handles the complex logic
       const { create } = await import('./services/create');
       const result = await create(repository);
 
@@ -44,7 +43,6 @@ export const create = action({
         };
       }
 
-      // Create database record after successful VM creation
       const machineId = await ctx.runMutation(internal.githubUser.repository.machine.mutations.create.create, {
         repositoryId: args.repositoryId,
         name: result.name,
