@@ -77,7 +77,11 @@ function GithubContent() {
     }
 
     if (code && state) {
-      console.log('OAuth callback received:', { code: code.substring(0, 10) + '...', state });
+      console.log('OAuth callback received:', {
+        codeLength: code.length,
+        state,
+        currentUser: currentUser ? 'logged_in' : currentUser === null ? 'anonymous' : 'loading'
+      });
 
       if (!state || state.length < 10) {
         setError('Invalid state parameter');
@@ -137,8 +141,16 @@ function GithubContent() {
       // Generate random state and OAuth URL
       const state = Math.random().toString(36).substring(2) + Date.now().toString(36);
       const clientId = 'Ov23li8Gt88cHjYDTWlT';
-      const callbackUrl = `https://convex-template-eosin.vercel.app/github`;
+      const callbackUrl = `${window.location.origin}/github`; // Use dynamic origin
       const scope = "repo,user:email";
+
+      console.log('OAuth URL details:', {
+        clientId,
+        callbackUrl,
+        scope,
+        state: state.substring(0, 10) + '...',
+        fullUrl: `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(callbackUrl)}&scope=${scope}&state=${state.substring(0, 10)}...`
+      });
 
       const url = `https://github.com/login/oauth/authorize?` +
         `client_id=${encodeURIComponent(clientId)}&` +
