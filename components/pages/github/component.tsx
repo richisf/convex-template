@@ -74,15 +74,13 @@ function GithubContent() {
           }
 
           setSuccess('GitHub account successfully connected!');
-        setIsLoading(false);
+          setIsLoading(false);
           
         // Clean URL and redirect after success
           const url = new URL(window.location.href);
           url.searchParams.delete('code');
           url.searchParams.delete('state');
           window.history.replaceState({}, '', url.toString());
-
-        setTimeout(() => router.push('/dashboard'), 2000);
       })
       .catch((err) => {
           console.error('OAuth error:', err);
