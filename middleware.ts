@@ -4,10 +4,16 @@ import {
   nextjsMiddlewareRedirect,
 } from "@convex-dev/auth/nextjs/server";
 
-const isSignInPage = createRouteMatcher(["/signin", "/github"]);
+const isSignInPage = createRouteMatcher(["/signin"]);
+const isGithubOAuthPage = createRouteMatcher(["/github"]);
 const isProtectedRoute = createRouteMatcher(["/", "/server"]);
 
 export default convexAuthNextjsMiddleware(async (request, { convexAuth }) => {
+  // Don't redirect GitHub OAuth callbacks - let them process normally
+  if (isGithubOAuthPage(request)) {
+    return; // Let the request continue without any redirects
+  }
+  
   if (isSignInPage(request) && (await convexAuth.isAuthenticated())) {
     return nextjsMiddlewareRedirect(request, "/");
   }
