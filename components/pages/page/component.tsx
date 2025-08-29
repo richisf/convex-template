@@ -202,6 +202,13 @@ export function Page() {
             className="bg-slate-200 dark:bg-slate-800 text-foreground rounded-md px-4 py-2"
             onClick={() => router.push("/signin")}
           >
+            Sign in
+          </button>
+
+          <button
+            className="bg-slate-200 dark:bg-slate-800 text-foreground rounded-md px-4 py-2"
+            onClick={() => router.push("/github")}
+          >
             Sign in with GitHub
           </button>
         </div>
