@@ -34,14 +34,22 @@ function GithubContent() {
     const errorParam = searchParams.get('error');
     const successParam = searchParams.get('success');
 
-    console.log('OAuth check:', { code: !!code, state: !!state, error: errorParam, success: successParam });
+    console.log('OAuth check:', { 
+      code: code ? 'present' : 'missing', 
+      state: state ? 'present' : 'missing', 
+      error: errorParam, 
+      success: successParam,
+      currentUser: currentUser ? 'loaded' : 'loading'
+    });
 
+    // Handle OAuth errors
     if (errorParam) {
       setError(searchParams.get('error_message') || errorParam);
       setProcessed(true);
       return;
     }
 
+    // Handle success redirect
     if (successParam === 'github_connected') {
       setSuccess('GitHub account successfully connected!');
       setProcessed(true);
@@ -49,37 +57,37 @@ function GithubContent() {
       return;
     }
 
+    // Handle OAuth callback - only process if we have both code and state, and user is loaded
     if (code && state && currentUser !== undefined) {
       setProcessed(true);
+      setIsLoading(true);
+      setError(null);
       
-      (async () => {
-        try {
-          setIsLoading(true);
-          setError(null);
-
-          const result = await createGithubUser({
-            userId: currentUser?.subject as Id<"users"> | undefined,
-            code: code,
-          });
-
-          if (!result.success) {
-            throw new Error(result.error || 'Failed to connect GitHub account');
-          }
-
-          setSuccess('GitHub account successfully connected!');
-          
-          // Clean URL
-          const url = new URL(window.location.href);
-          url.searchParams.delete('code');
-          url.searchParams.delete('state');
-          window.history.replaceState({}, '', url.toString());
-
-        } catch (err) {
-          console.error('OAuth error:', err);
-          setError(err instanceof Error ? err.message : 'Failed to connect GitHub account');
-          setIsLoading(false);
+      createGithubUser({
+        userId: currentUser?.subject as Id<"users"> | undefined,
+        code: code,
+      })
+      .then((result) => {
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to connect GitHub account');
         }
-      })();
+
+        setSuccess('GitHub account successfully connected!');
+        setIsLoading(false);
+        
+        // Clean URL and redirect after success
+        const url = new URL(window.location.href);
+        url.searchParams.delete('code');
+        url.searchParams.delete('state');
+        window.history.replaceState({}, '', url.toString());
+        
+        setTimeout(() => router.push('/dashboard'), 2000);
+      })
+      .catch((err) => {
+        console.error('OAuth error:', err);
+        setError(err instanceof Error ? err.message : 'Failed to connect GitHub account');
+        setIsLoading(false);
+      });
     }
   }, [searchParams, router, createGithubUser, currentUser, processed]);
 
