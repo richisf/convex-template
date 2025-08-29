@@ -20,6 +20,8 @@ import type * as githubUser_mutations_actions_services_fetchGithubUser from "../
 import type * as githubUser_mutations_create from "../githubUser/mutations/create.js";
 import type * as githubUser_mutations_remove from "../githubUser/mutations/remove.js";
 import type * as githubUser_query from "../githubUser/query.js";
+import type * as githubUser_repository_mutations_actions_create_isDefault from "../githubUser/repository/mutations/actions/create/isDefault.js";
+import type * as githubUser_repository_mutations_actions_create_isNotDefault from "../githubUser/repository/mutations/actions/create/isNotDefault.js";
 import type * as githubUser_repository_mutations_actions_create from "../githubUser/repository/mutations/actions/create.js";
 import type * as githubUser_repository_mutations_actions_services_createRepositoryFromTemplate from "../githubUser/repository/mutations/actions/services/createRepositoryFromTemplate.js";
 import type * as githubUser_repository_mutations_actions_services_fetchGithubRepositories from "../githubUser/repository/mutations/actions/services/fetchGithubRepositories.js";
@@ -46,6 +48,8 @@ declare const fullApi: ApiFromModules<{
   "githubUser/mutations/create": typeof githubUser_mutations_create;
   "githubUser/mutations/remove": typeof githubUser_mutations_remove;
   "githubUser/query": typeof githubUser_query;
+  "githubUser/repository/mutations/actions/create/isDefault": typeof githubUser_repository_mutations_actions_create_isDefault;
+  "githubUser/repository/mutations/actions/create/isNotDefault": typeof githubUser_repository_mutations_actions_create_isNotDefault;
   "githubUser/repository/mutations/actions/create": typeof githubUser_repository_mutations_actions_create;
   "githubUser/repository/mutations/actions/services/createRepositoryFromTemplate": typeof githubUser_repository_mutations_actions_services_createRepositoryFromTemplate;
   "githubUser/repository/mutations/actions/services/fetchGithubRepositories": typeof githubUser_repository_mutations_actions_services_fetchGithubRepositories;

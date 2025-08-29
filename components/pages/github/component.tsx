@@ -1,90 +1,18 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useSearchParams } from "next/navigation";
-import { useAction, useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { Id } from "@/convex/_generated/dataModel";
 
 export function Github() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <GithubContent />
-    </Suspense>
-  );
-}
-
-function GithubContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const [status, setStatus] = useState({ error: '', success: '', loading: false });
-  const [processed, setProcessed] = useState(false);
-
-  const currentUser = useQuery(api.auth.currentUser);
-  const createGithubUser = useAction(api.githubUser.mutations.actions.create.create);
-
-  useEffect(() => {
-    if (processed) return;
-
-    const { code, state, error: errorParam, success: successParam } = {
-      code: searchParams.get('code'),
-      state: searchParams.get('state'),
-      error: searchParams.get('error'),
-      success: searchParams.get('success')
-    };
-
-    // Handle OAuth errors
-    if (errorParam) {
-      setStatus(prev => ({ ...prev, error: searchParams.get('error_message') || errorParam }));
-      setProcessed(true);
-      return;
-    }
-
-    // Handle success redirect
-    if (successParam === 'github_connected') {
-      setStatus(prev => ({ ...prev, success: 'GitHub account successfully connected!' }));
-      setProcessed(true);
-      setTimeout(() => router.push('/dashboard'), 2000);
-      return;
-    }
-
-    // Handle OAuth callback
-    if (code && state && currentUser !== undefined) {
-      setProcessed(true);
-      setStatus(prev => ({ ...prev, loading: true, error: '' }));
-
-      createGithubUser({
-        userId: currentUser?.subject as Id<"users"> | undefined,
-        code,
-      })
-        .then((result) => {
-          if (!result.success) throw new Error(result.error || 'Failed to connect GitHub account');
-
-          setStatus(prev => ({ ...prev, success: 'GitHub account successfully connected!', loading: false }));
-
-          // Clean URL
-          const url = new URL(window.location.href);
-          ['code', 'state'].forEach(param => url.searchParams.delete(param));
-          window.history.replaceState({}, '', url.toString());
-        })
-        .catch((err) => {
-          console.error('OAuth error:', err);
-          setStatus(prev => ({
-            ...prev,
-            error: err instanceof Error ? err.message : 'Failed to connect GitHub account',
-            loading: false
-          }));
-        });
-    }
-  }, [searchParams, router, createGithubUser, currentUser, processed]);
+  const [loading, setLoading] = useState(false);
 
   const initiateGithubOAuth = () => {
-    setStatus(prev => ({ ...prev, loading: true, error: '' }));
+    setLoading(true);
 
     const state = Math.random().toString(36).substring(2) + Date.now().toString(36);
     const clientId = 'Ov23li8Gt88cHjYDTWlT';
-    const callbackUrl = `${window.location.origin}/github/callback`;
+    const callbackUrl = `${window.location.origin}/github/callback/api`;
     const scope = "user,repo";
 
     const url = `https://github.com/login/oauth/authorize?` +
@@ -99,8 +27,6 @@ function GithubContent() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="w-full max-w-md p-6">
-
-        
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="text-center mb-6">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Connect GitHub</h1>
@@ -109,18 +35,6 @@ function GithubContent() {
             </p>
           </div>
 
-          {status.error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
-              <p className="text-red-600 text-sm">{status.error}</p>
-            </div>
-          )}
-
-          {status.success && (
-            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">
-              <p className="text-green-600 text-sm">✅ {status.success}</p>
-            </div>
-          )}
-
           <div className="space-y-4">
             <div className="text-center text-sm text-gray-500">
               Link your GitHub repositories to get started with managing your codebase.
@@ -128,10 +42,10 @@ function GithubContent() {
 
             <button
               onClick={initiateGithubOAuth}
-              disabled={status.loading}
+              disabled={loading}
               className="w-full px-4 py-3 bg-gray-800 text-white rounded-md hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
             >
-              {status.loading ? (
+              {loading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                   Connecting...
@@ -147,7 +61,7 @@ function GithubContent() {
             </button>
 
             <div className="text-center">
-              <button 
+              <button
                 onClick={() => router.push('/dashboard')}
                 className="text-sm text-gray-500 hover:text-gray-700 underline"
               >

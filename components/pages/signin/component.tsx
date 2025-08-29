@@ -11,7 +11,6 @@ export function SignIn() {
   const router = useRouter();
   return (
     <div className="flex flex-col gap-8 w-96 mx-auto h-screen justify-center items-center">
-      <p>Log in to see the numbers</p>
       <form
         className="flex flex-col gap-2"
         onSubmit={(e) => {
