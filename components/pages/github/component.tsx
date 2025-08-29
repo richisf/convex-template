@@ -34,8 +34,15 @@ function GithubContent() {
     const errorParam = searchParams.get('error');
     const successParam = searchParams.get('success');
 
-
-
+    console.log('React component received params:', {
+      code: code ? 'present' : 'missing',
+      state: state ? 'present' : 'missing',
+      error: errorParam || 'none',
+      success: successParam || 'none',
+      fullURL: typeof window !== 'undefined' ? window.location.href : 'server-side',
+      allParams: Object.fromEntries(searchParams.entries())
+    });
+    
     // Handle OAuth errors
     if (errorParam) {
       setError(searchParams.get('error_message') || errorParam);

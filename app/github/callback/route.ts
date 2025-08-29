@@ -28,10 +28,20 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Check for missing state
+    if (!state) {
+      return NextResponse.redirect(
+        new URL('/github?error=missing_state&error_message=Missing state parameter', request.url)
+      );
+    }
+
     // Redirect to frontend with code and state for processing
-    return NextResponse.redirect(
-      new URL(`/github?code=${code}&state=${state}`, request.url)
-    );
+    const baseUrl = new URL(request.url).origin;
+    const redirectUrl = `${baseUrl}/github?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`;
+
+    console.log('Redirecting to:', redirectUrl);
+
+    return NextResponse.redirect(redirectUrl);
 
   } catch (error) {
     console.error('GitHub OAuth callback error:', error);
