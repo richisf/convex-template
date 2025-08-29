@@ -31,6 +31,9 @@ function GithubContent() {
     const errorParam = searchParams.get('error');
     const successParam = searchParams.get('success');
 
+    // Debug: Log all OAuth parameters
+    console.log('OAuth parameters:', { code: !!code, state, errorParam, successParam });
+
     if (errorParam) {
       const errorMessage = searchParams.get('error_message') || errorParam;
       setError(decodeURIComponent(errorMessage));
@@ -45,7 +48,15 @@ function GithubContent() {
       return;
     }
 
+    // Handle case where we have state but no code (user denied or error)
+    if (state && !code && !errorParam) {
+      console.log('OAuth cancelled or failed - state without code');
+      setError('GitHub authorization was cancelled or failed. Please try again.');
+      return;
+    }
+
     if (code && state) {
+      console.log('OAuth callback received:', { code: code.substring(0, 10) + '...', state });
 
       if (!state || state.length < 10) {
         setError('Invalid state parameter');
