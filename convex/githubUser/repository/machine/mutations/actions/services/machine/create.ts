@@ -36,8 +36,10 @@ export interface MachineState {
 
 
 export async function createMachine(name: string, zone: string): Promise<MachineState> {
+  // Load GCP credentials
   const decoded = Buffer.from(process.env.GOOGLE_APPLICATION_CREDENTIALS!, 'base64').toString();
   const credentials = JSON.parse(decoded) as GoogleCredentials;
+
   const gcpProjectId = credentials.project_id;
 
   const clientOptions = {
@@ -65,12 +67,10 @@ export async function createMachine(name: string, zone: string): Promise<Machine
     ip: undefined,
   };
 
-  console.log(`Creating VM instance: ${name} in zone ${zone} for project ${gcpProjectId}...`);
-
   // SSH Configuration
   const sshPublicKeyPath = process.env.GCP_SSH_PUBLIC_KEY_PATH;
   const sshPublicKeyContent = process.env.GCP_SSH_PUBLIC_KEY;
-  const STATIC_VM_IP = '34.102.136.180';
+  const STATIC_VM_IP = '34.135.3.6';
 
   if (!sshPublicKeyContent) {
     throw new Error(`SSH public key not found at: ${sshPublicKeyPath} and no GCP_SSH_PUBLIC_KEY environment variable provided.`);
@@ -112,6 +112,7 @@ export async function createMachine(name: string, zone: string): Promise<Machine
     }
   };
 
+  // Create VM instance
   const [insertCallResponse] = await instancesClient.insert({
     project: gcpProjectId,
     zone: zone,
@@ -120,6 +121,7 @@ export async function createMachine(name: string, zone: string): Promise<Machine
 
   const operationName = insertCallResponse.latestResponse?.name;
 
+  // Wait for operation to complete
   const [operation] = await operationsClient.wait({
     operation: operationName,
     project: gcpProjectId,
@@ -131,7 +133,6 @@ export async function createMachine(name: string, zone: string): Promise<Machine
     throw new Error(`Failed to create VM: ${errorDetails ?? operation.httpErrorMessage ?? 'Unknown error'}`);
   }
 
-  console.log(`✅ VM created and configured successfully: ${name}`);
   return {
     ...machineState,
     ip: STATIC_VM_IP,

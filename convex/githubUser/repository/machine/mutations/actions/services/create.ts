@@ -34,19 +34,20 @@ export interface VMCreateResult {
   error?: string;
 }
 
-// Zone fallback list
+// Zone fallback list - prioritize us-central1 to match existing static IP
 const ZONES = [
+  'us-central1-a',
+  'us-central1-b',
+  'us-central1-c',
+  'us-central1-f',
+  'us-west1-a',
+  'us-west1-b',
+  'us-west1-c',
   'europe-west1-a',
   'europe-west4-a',
   'europe-west3-b',
   'europe-west4-b',
   'europe-west5-a',
-  'us-central1-a',
-  'us-central1-b',
-  'us-central1-c',
-  'us-west1-a',
-  'us-west1-b',
-  'europe-west1-a',
   'europe-west1-b',
   'europe-west2-a',
   'europe-west2-b',
