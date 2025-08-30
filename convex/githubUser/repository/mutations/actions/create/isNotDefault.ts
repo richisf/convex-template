@@ -43,7 +43,7 @@ export const create = internalAction({
       }
 
       // Create repository name with prefix
-      const importRepoName = `default-repository-${args.name}`;
+      const importRepoName = `whitenode-template-${args.name}`;
       console.log(`Generating repository from template: ${importRepoName}`);
 
       // Generate repository from template using service

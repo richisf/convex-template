@@ -11,6 +11,10 @@ export interface RepositoryInfo {
   _id: string;
   name: string;
   githubUserId: string;
+  userId?: string;
+  isDefault?: boolean;
+  _creationTime?: number;
+  // GitHub information populated by the query
   accessToken?: string;
   fullName?: string;
   envVars?: Array<{ key: string; value: string }>;
@@ -60,93 +64,78 @@ export async function create(
   devServerSetup?: DevServerSetup
 ): Promise<VMCreateResult> {
   try {
+    // Create new machine
     const machineName = `${repository.name}-vm-${Date.now()}`;
+    let machineState: MachineState | undefined;
 
     for (const zone of ZONES) {
       try {
-
-        const machineState = await createMachine(machineName, zone);
-
-        await setupSystem(machineState);
-
-        let devServerResult;
-
-        if (repository.accessToken && repository.fullName) {
-
-          const repoConfig: RepositoryConfig = {
-            fullName: repository.fullName,
-            accessToken: repository.accessToken,
-            repoDir: repository.name,
-            envVars: repository.envVars || []
-          };
-
-          const repoResult = await setupRepository(machineState, repoConfig);
-
-          const devServerConfig: DevServerConfig = {
-            repoPath: repoResult.repoPath,
-            port: devServerSetup?.port || 3000,
-            domain: devServerSetup?.domain
-          };
-
-          devServerResult = await startDevServer(machineState, devServerConfig);
-
-          if (devServerSetup?.domain) {
-            const sslConfig: SSLConfig = {
-              domain: devServerSetup.domain,
-              email: devServerSetup.email,
-              port: devServerSetup.port || 3000
-            };
-
-            const sslResult = await setupSSL(machineState, sslConfig);
-
-            if (sslResult.certPath) {
-              console.log(`🔒 SSL certificate configured for ${sslResult.domain}`);
-              devServerResult.httpsUrl = `https://${sslResult.domain}`;
-            } else {
-              console.log('⚠️ SSL setup failed, continuing with HTTP only');
-            }
-          }
-        }
-
-        return {
-          success: true,
-          name: machineName,
-          zone: zone,
-          machineState: machineState,
-          devServer: devServerResult
-        };
-
+        machineState = await createMachine(machineName, zone);
+        break;
       } catch (error) {
         console.error(`❌ Failed to create VM in zone ${zone}:`, error);
-
-        // Only retry for zone-specific resource issues
-        const isZoneRetryableError =
-          error instanceof Error && (
-            error.message.includes('503') ||
-            error.message.includes('SERVICE UNAVAILABLE') ||
-            error.message.includes('does not have enough resources available') ||
-            error.message.includes('ZONE_RESOURCE_POOL_EXHAUSTED') ||
-            error.message.includes('RESOURCE_POOL_EXHAUSTED')
-          );
-
-        if (!isZoneRetryableError) {
-          // For non-zone-specific errors, don't retry zones
-          throw error;
-        }
-
-        console.log(`❌ Zone ${zone} unavailable/exhausted, trying next zone...`);
+        machineState = undefined; 
       }
     }
 
+    if (!machineState) {
+      throw new Error("Failed to create VM in any available zone");
+    }
+
+    await setupSystem(machineState);
+
+    let devServerResult;
+
+    if (repository.accessToken && repository.fullName) {
+      console.log(`✅ Repository setup conditions met - proceeding with repo setup`);
+
+      const repoConfig: RepositoryConfig = {
+        fullName: repository.fullName,
+        accessToken: repository.accessToken,
+        repoDir: repository.name,
+        envVars: repository.envVars || []
+      };
+
+      const repoResult = await setupRepository(machineState, repoConfig);
+
+      const devServerConfig: DevServerConfig = {
+        repoPath: repoResult.repoPath,
+        port: devServerSetup?.port || 3000,
+        domain: devServerSetup?.domain
+      };
+
+      devServerResult = await startDevServer(machineState, devServerConfig);
+
+      if (devServerSetup?.domain) {
+        const sslConfig: SSLConfig = {
+          domain: devServerSetup.domain,
+          email: devServerSetup.email,
+          port: devServerSetup.port || 3000
+        };
+
+        const sslResult = await setupSSL(machineState, sslConfig);
+
+        if (sslResult.certPath) {
+          console.log(`🔒 SSL certificate configured for ${sslResult.domain}`);
+          devServerResult.httpsUrl = `https://${sslResult.domain}`;
+        } else {
+          console.log('⚠️ SSL setup failed, continuing with HTTP only');
+        }
+      }
+    } else {
+      console.log(`❌ Repository setup SKIPPED - missing required data:`);
+    }
+
     return {
-      success: false,
-      name: "",
-      zone: "",
-      error: "Failed to create VM in any available zone",
+      success: true,
+      name: machineName,
+      zone: machineState.zone,
+      machineState: machineState,
+      devServer: devServerResult
     };
 
   } catch (error) {
-    console.error("❌ VM creation failed:", error);
+    console.error("❌ Machine setup failed:", error);
     return {
       success: false,
       name: "",

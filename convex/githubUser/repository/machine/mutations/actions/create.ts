@@ -32,8 +32,18 @@ export const create = action({
         throw new Error(`Repository not found: ${args.repositoryId}`);
       }
 
+      console.log(`🆕 Creating new machine for repository: ${repository.name}`);
+
       const { create } = await import('./services/create');
       const result = await create(repository);
+
+      {/*const devServerSetup = {
+        domain: "dev.whitenode.dev",
+        email: "admin@whitenode.dev", 
+        port: 3000
+      };
+      const result = await create(repository, devServerSetup);
+      */}
 
       if (!result.success) {
         console.error(`❌ VM creation failed: ${result.error}`);

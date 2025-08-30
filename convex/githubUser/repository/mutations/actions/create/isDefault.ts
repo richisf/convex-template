@@ -20,7 +20,7 @@ export const create = internalAction({
       // Check if default repository already exists
       const existingDefaultRepo = await ctx.runQuery(internal.githubUser.repository.query.by_user_and_name, {
         userId: undefined,
-        name: "default-repository",
+        name: "whitenode-template",
       });
 
       if (existingDefaultRepo) {
@@ -30,7 +30,7 @@ export const create = internalAction({
       // Create the repository entry in the database
       const repositoryId: Id<"repository"> = await ctx.runMutation(internal.githubUser.repository.mutations.create.create, {
         userId: undefined,
-        name: "default-repository",
+        name: "whitenode-template",
         isDefault: true,
       });
 

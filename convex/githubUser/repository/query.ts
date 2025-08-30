@@ -177,11 +177,36 @@ export const by_id = internalQuery({
       githubUserId: v.id("githubUser"),
       name: v.string(),
       isDefault: v.optional(v.boolean()),
+      // Include GitHub user data for repository setup
+      accessToken: v.optional(v.string()),
+      fullName: v.optional(v.string()),
     }),
     v.null()
   ),
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.repositoryId);
+    const repository = await ctx.db.get(args.repositoryId);
+    if (!repository) {
+      return null;
+    }
+
+    // Get the associated GitHub user to include token and username
+    const githubUser = await ctx.db.get(repository.githubUserId);
+    if (!githubUser) {
+      return {
+        ...repository,
+        accessToken: undefined,
+        fullName: undefined,
+      };
+    }
+
+    // Construct full repository name as "username/repo-name"
+    const fullName = `${githubUser.username}/${repository.name}`;
+
+    return {
+      ...repository,
+      accessToken: githubUser.token,
+      fullName,
+    };
   },
 });
 
