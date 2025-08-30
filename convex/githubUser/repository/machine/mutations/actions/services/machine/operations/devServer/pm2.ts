@@ -89,7 +89,7 @@ export async function setupPM2(
       health_check_grace_period: 5000,
       health_check_fatal_exceptions: true,
       exp_backoff_restart_delay: 100,
-      watch: false,
+      watch: true,
       shutdown_with_message: true
     }]
   };
